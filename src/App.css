@@ -1,0 +1,367 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --ink: #0e1b2b;
+  --parchment: #f4efe4;
+  --brass: #c9a15c;
+  --sienna: #8b4b3b;
+  --sage: #5a6b5d;
+  --text-on-dark: #eae3d3;
+
+  --font-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-grotesk: 'Inter', 'General Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: var(--font-grotesk);
+  background: var(--ink);
+  color: var(--text-on-dark);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Layout */
+.app {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  grid-template-rows: 1fr;
+  background: var(--ink);
+}
+
+/* The map "plate" — a printed atlas page: parchment matting, brass border,
+   a faint engraved double-line, floating on the ink-navy ground. */
+.map-plate {
+  position: relative;
+  margin: 20px;
+  padding: 12px;
+  background: var(--parchment);
+  border: 1px solid var(--brass);
+  outline: 1px solid rgba(201, 161, 92, 0.3);
+  outline-offset: 5px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  display: flex;
+}
+
+.map-plate .leaflet-container {
+  flex: 1;
+  border: 1px solid var(--ink);
+  font-family: var(--font-grotesk);
+  background: var(--parchment);
+}
+
+/* Aged-atlas tile treatment so default OSM colors don't clash with the palette */
+.map-plate .leaflet-tile-pane {
+  filter: sepia(38%) saturate(60%) brightness(93%) hue-rotate(-8deg) contrast(105%);
+}
+
+.atlas-pin,
+.atlas-compass {
+  background: transparent;
+  border: none;
+}
+
+/* Ship's log side panel */
+.ships-log {
+  display: flex;
+  flex-direction: column;
+  padding: 26px 22px;
+  border-left: 1px solid rgba(201, 161, 92, 0.4);
+  overflow-y: auto;
+  gap: 22px;
+}
+
+.log-header {
+  border-bottom: 1px solid rgba(201, 161, 92, 0.25);
+  padding-bottom: 16px;
+}
+
+.log-kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 6px;
+}
+
+.log-title {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(22px, 2.4vw, 28px);
+  color: var(--text-on-dark);
+}
+
+.log-body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  flex: 1;
+}
+
+.mode-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Segmented control — mode switch and fastest/shortest toggle share this
+   language: thin brass border, sharp corners, no default pill/Material look. */
+.segmented {
+  display: flex;
+  border: 1px solid var(--brass);
+}
+
+.segment {
+  flex: 1;
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--text-on-dark);
+  border: none;
+  border-right: 1px solid rgba(201, 161, 92, 0.4);
+  font-family: var(--font-grotesk);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.segment:last-child {
+  border-right: none;
+}
+
+.segment:hover {
+  background: rgba(201, 161, 92, 0.12);
+}
+
+.segment.active {
+  background: var(--brass);
+  color: var(--ink);
+}
+
+/* Readout — the signature instrument-gauge moment. Restrained everywhere
+   else so this stays the one bold element on the page. */
+.readout {
+  padding: 4px 0 2px;
+}
+
+.readout-row {
+  display: flex;
+  gap: 32px;
+}
+
+.readout-stat {
+  flex: 1;
+  min-width: 0;
+}
+
+.readout-value {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: clamp(32px, 4vw, 44px);
+  line-height: 1;
+  color: var(--brass);
+  white-space: nowrap;
+}
+
+.readout-unit {
+  font-family: var(--font-grotesk);
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 4px;
+  color: var(--text-on-dark);
+  opacity: 0.7;
+}
+
+.readout-label {
+  font-family: var(--font-grotesk);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-on-dark);
+  opacity: 0.55;
+  margin-top: 8px;
+}
+
+.readout-rule {
+  height: 1px;
+  background: var(--brass);
+  margin-top: 16px;
+  opacity: 0.85;
+}
+
+/* Route list */
+.route-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.route-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--parchment);
+  border: 1px solid var(--brass);
+  border-left: 4px solid transparent;
+  color: var(--ink);
+  font-family: var(--font-grotesk);
+  font-size: 12.5px;
+  cursor: pointer;
+  text-align: left;
+  opacity: 0.82;
+  transition: opacity 0.15s ease, border-left-color 0.15s ease;
+}
+
+.route-item:hover {
+  opacity: 1;
+}
+
+.route-item.active {
+  opacity: 1;
+  border-left-color: var(--brass);
+}
+
+.route-swatch {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.route-item-label {
+  flex: 1;
+}
+
+.route-item-stats {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  opacity: 0.7;
+}
+
+/* Slider — brass thumb and track, no default OS styling */
+.slider-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slider-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-on-dark);
+  opacity: 0.7;
+}
+
+.brass-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  background: rgba(201, 161, 92, 0.4);
+  outline-offset: 6px;
+}
+
+.brass-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--brass);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  cursor: pointer;
+  margin-top: -7px;
+}
+
+.brass-slider::-moz-range-track {
+  height: 2px;
+  background: rgba(201, 161, 92, 0.4);
+}
+
+.brass-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--brass);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+/* Hints & log notes */
+.panel-hint {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-on-dark);
+  opacity: 0.7;
+}
+
+.panel-hint.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.log-note {
+  padding: 10px 12px;
+  border-left: 2px solid var(--sienna);
+  background: rgba(139, 75, 59, 0.14);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-on-dark);
+}
+
+/* Responsive */
+@media (max-width: 860px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: 52vh 1fr;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .map-plate {
+    margin: 12px 12px 0;
+  }
+
+  .ships-log {
+    border-left: none;
+    border-top: 1px solid rgba(201, 161, 92, 0.4);
+    padding: 18px 16px 24px;
+  }
+}
