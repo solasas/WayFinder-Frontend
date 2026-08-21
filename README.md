@@ -17,7 +17,7 @@ charts an isochrone: how far you can get from a point within N minutes.
 ## Prerequisites
 
 - Node.js 18+
-- The [Spring Boot backend](../backend) running on `http://localhost:8080`
+- The Spring Boot backend (`map_shortest_path_finder`) running on `http://localhost:8080`
 
 ## Getting Started
 
@@ -150,4 +150,3 @@ APIs don't use CSRF tokens).
 
 **"The routing engine is still loading its charts"** — Run the road data import first (see step 1
 above), then restart the backend normally.
-# WayFinder-Frontend
