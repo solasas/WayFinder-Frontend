@@ -83,8 +83,10 @@ export default function MapView({
   onSelectRoute,
   isoCenter,
   isochrone,
+  snapLinks = [],
   onMapClick,
 }) {
+  const isRouteMode = mode !== 'isochrone'
   const center = region?.center ? [region.center.lat, region.center.lng] : DEFAULT_CENTER
   const bounds = normalizeBoundingBox(region?.boundingBox)
 
@@ -109,17 +111,17 @@ export default function MapView({
 
       <ClickHandler onMapClick={onMapClick} />
       <RegionSetup region={region} bounds={bounds} />
-      <FitRoutes routes={mode === 'route' ? routes : []} />
+      <FitRoutes routes={isRouteMode ? routes : []} />
       <FitIsochrone isochrone={mode === 'isochrone' ? isochrone : null} />
 
       {bounds && (
         <Rectangle bounds={bounds} pathOptions={{ color: '#C9A15C', weight: 1, fillOpacity: 0, dashArray: '5 5' }} />
       )}
 
-      {mode === 'route' && startPin && <Marker position={[startPin.lat, startPin.lng]} icon={startIcon} />}
-      {mode === 'route' && endPin && <Marker position={[endPin.lat, endPin.lng]} icon={endIcon} />}
+      {isRouteMode && startPin && <Marker position={[startPin.lat, startPin.lng]} icon={startIcon} />}
+      {isRouteMode && endPin && <Marker position={[endPin.lat, endPin.lng]} icon={endIcon} />}
 
-      {mode === 'route' &&
+      {isRouteMode &&
         nonSelectedRoutes.map(({ r, i }) => (
           <Polyline
             key={i}
@@ -129,7 +131,17 @@ export default function MapView({
           />
         ))}
 
-      {mode === 'route' && selectedRoute && (
+      {isRouteMode &&
+        snapLinks.map((link, i) => (
+          <Polyline
+            key={`snap-${i}`}
+            positions={link.map((p) => [p.lat, p.lng])}
+            pathOptions={{ color: '#8B4B3B', weight: 2, dashArray: '4 6', opacity: 0.9 }}
+            interactive={false}
+          />
+        ))}
+
+      {isRouteMode && selectedRoute && (
         <Polyline
           positions={selectedRoute.path.map((p) => [p.lat, p.lng])}
           pathOptions={{ color: routeColor(selectedRouteIndex), weight: ROUTE_SELECTED_WEIGHT, opacity: 1 }}

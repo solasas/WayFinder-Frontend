@@ -20,8 +20,20 @@ function describeError(err, context) {
       : 'No route connects those two points — they may sit on disconnected roads.'
   }
 
+  if (status === 422) {
+    return serverMsg || 'That instruction could not be understood — try rephrasing it.'
+  }
+
+  if (status === 429) {
+    return serverMsg || 'The route interpreter is busy right now. Wait a moment and try again.'
+  }
+
   if (status === 503) {
     return serverMsg || 'The routing engine is still loading its charts. Try again in a moment.'
+  }
+
+  if (status === 504) {
+    return serverMsg || 'The route interpreter took too long to answer. Try again.'
   }
 
   if (!err.response) {
@@ -51,6 +63,38 @@ export async function fetchIsochrone({ lat, lng, minutes, optimize }) {
     return { data: res.data, error: null }
   } catch (err) {
     return { data: null, error: describeError(err, 'isochrone') }
+  }
+}
+
+// Unlike the other endpoints, intent routing keeps a structured error:
+// { message, clarificationNeeded?, question?, code?, retryWithAllowUnknown? }
+// so the UI can ask a follow-up question or offer a retry.
+function describeIntentError(err) {
+  const status = err.response?.status
+  const body = err.response?.data
+  const message = describeError(err, 'route')
+
+  if (status === 422 && body?.clarificationNeeded) {
+    return { message, clarificationNeeded: true, question: body.question || null }
+  }
+  if (status === 404 && body?.code === 'CONSTRAINTS_NOT_SATISFIABLE') {
+    return { message, code: body.code, retryWithAllowUnknown: body.retryWithAllowUnknown === true }
+  }
+  return { message }
+}
+
+export async function fetchIntentRoute({ start, end, instruction, objective, unknownDataPolicy }) {
+  try {
+    const res = await axios.post(`${API_BASE}/routes/intent`, {
+      start,
+      end,
+      instruction,
+      objective,
+      unknownDataPolicy,
+    })
+    return { data: res.data, error: null }
+  } catch (err) {
+    return { data: null, error: describeIntentError(err) }
   }
 }
 

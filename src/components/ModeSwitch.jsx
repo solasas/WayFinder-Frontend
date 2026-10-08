@@ -13,6 +13,15 @@ export default function ModeSwitch({ mode, onChange }) {
       <button
         type="button"
         role="tab"
+        aria-selected={mode === 'intent'}
+        className={`segment ${mode === 'intent' ? 'active' : ''}`}
+        onClick={() => onChange('intent')}
+      >
+        Ask
+      </button>
+      <button
+        type="button"
+        role="tab"
         aria-selected={mode === 'isochrone'}
         className={`segment ${mode === 'isochrone' ? 'active' : ''}`}
         onClick={() => onChange('isochrone')}

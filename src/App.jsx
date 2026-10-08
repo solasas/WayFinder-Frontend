@@ -3,9 +3,13 @@ import MapView from './components/MapView'
 import SidePanel from './components/SidePanel'
 import RoutePanel from './components/RoutePanel'
 import IsochronePanel from './components/IsochronePanel'
+import IntentPanel from './components/IntentPanel'
 import { fetchRegion, fetchIsochrone } from './api'
 import { useDebouncedValue } from './hooks/useDebouncedValue'
 import { useRoutes } from './hooks/useRoutes'
+import { useIntentRoute } from './hooks/useIntentRoute'
+
+const noop = () => {}
 
 export default function App() {
   const [region, setRegion] = useState(null)
@@ -24,6 +28,9 @@ export default function App() {
     handleMapClick: handleRouteClick,
     refetchWithOptimize,
   } = useRoutes()
+
+  const intent = useIntentRoute()
+  const handleIntentClick = intent.handleMapClick
 
   const [isoCenter, setIsoCenter] = useState(null)
   const [minutes, setMinutes] = useState(15)
@@ -46,9 +53,13 @@ export default function App() {
         setIsoCenter(latlng)
         return
       }
+      if (mode === 'intent') {
+        handleIntentClick(latlng)
+        return
+      }
       handleRouteClick(latlng, optimize)
     },
-    [mode, optimize, handleRouteClick],
+    [mode, optimize, handleRouteClick, handleIntentClick],
   )
 
   const handleOptimizeChange = useCallback(
@@ -93,8 +104,11 @@ export default function App() {
     }
   }, [mode, isoCenter, debouncedMinutes, optimize])
 
-  const activeError = regionError || (mode === 'route' ? routeError : isoError)
+  // The intent panel renders its own structured error beside the form.
+  const modeError = mode === 'route' ? routeError : mode === 'isochrone' ? isoError : null
+  const activeError = regionError || modeError
   const activeLoading = mode === 'route' ? routeLoading : isoLoading
+  const isIntent = mode === 'intent'
 
   return (
     <div className="app">
@@ -102,11 +116,12 @@ export default function App() {
         <MapView
           region={region}
           mode={mode}
-          startPin={startPin}
-          endPin={endPin}
-          routes={routes}
-          selectedRouteIndex={selectedRouteIndex}
-          onSelectRoute={setSelectedRouteIndex}
+          startPin={isIntent ? intent.startPin : startPin}
+          endPin={isIntent ? intent.endPin : endPin}
+          routes={isIntent ? intent.routes : routes}
+          selectedRouteIndex={isIntent ? 0 : selectedRouteIndex}
+          onSelectRoute={isIntent ? noop : setSelectedRouteIndex}
+          snapLinks={isIntent ? intent.snapLinks : undefined}
           isoCenter={isoCenter}
           isochrone={isochrone}
           onMapClick={handleMapClick}
@@ -114,7 +129,21 @@ export default function App() {
       </div>
 
       <SidePanel region={region} mode={mode} onModeChange={setMode} error={activeError}>
-        {mode === 'route' ? (
+        {mode === 'intent' ? (
+          <IntentPanel
+            startPin={intent.startPin}
+            endPin={intent.endPin}
+            instruction={intent.instruction}
+            onInstructionChange={intent.setInstruction}
+            objective={intent.objective}
+            onObjectiveChange={intent.changeObjective}
+            result={intent.result}
+            loading={intent.loading}
+            error={intent.error}
+            canSubmit={intent.canSubmit}
+            onSubmit={intent.submit}
+          />
+        ) : mode === 'route' ? (
           <RoutePanel
             optimize={optimize}
             onOptimizeChange={handleOptimizeChange}
